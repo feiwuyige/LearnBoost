@@ -7,3 +7,4 @@ extern int create_acceptor_socket();
 extern int bind_acceptor_socket();
 extern int connect_to_end();
 extern int dns_connect_to_end();
+extern int accept_new_connection();
