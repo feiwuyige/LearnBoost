@@ -129,3 +129,167 @@ int accept_new_connection(){
         return e.code().value();
     }
 }
+
+void use_const_buffer(){
+    std::string buf = "hello world";
+    boost::asio::const_buffer asio_buf(buf.c_str(), buf.length());
+    std::vector<boost::asio::const_buffer> buffers_sequence;
+    buffers_sequence.push_back(asio_buf);
+}
+
+void use_buffer_str(){
+    boost::asio::const_buffers_1 output_buf = boost::asio::buffer("hello world");   
+}
+
+void use_buffer_array(){
+    const size_t BUF_SIZE_BYTES = 20;
+    //模板偏特化，用char[]进行实例化，从而告诉该模板释放时使用 delete[]
+    std::unique_ptr<char[]> buf(new char[BUF_SIZE_BYTES]);
+    auto input_buf = boost::asio::buffer(static_cast<void*>(buf.get()), BUF_SIZE_BYTES);
+}
+
+void write_to_socket(boost::asio::ip::tcp::socket& sock){
+    std::string buf = "Hello, World";
+    std::size_t total_bytes_written = 0;
+    //循环发送
+    //write_some 返回每次写入的字节数
+    while(total_bytes_written != buf.length()){
+        //将用户发送缓冲区的数据发送至tcp缓冲区
+        //所以tcp缓冲区可能容纳不了那么多，就会通过该函数返回
+        //从而告诉用户发送了多少数据
+        total_bytes_written += sock.write_some(boost::asio::buffer(buf.c_str()+total_bytes_written, 
+                                                                    buf.length() - total_bytes_written));
+
+    }
+}
+
+int send_data_by_write_some(){
+    std::string raw_ip_address = "192.168.3.11";
+    unsigned short port_num = 3333;
+    try{
+        boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(raw_ip_address), port_num);
+        boost::asio::io_context ioc;
+        boost::asio::ip::tcp::socket sock(ioc, ep.protocol());
+        sock.connect(ep);
+        write_to_socket(sock);
+    }
+    catch(std::system_error& e){
+        std::cout << "error" ;
+    }
+}
+
+int send_data_by_send(){
+    std::string raw_ip_address = "192.168.3.11";
+    unsigned short port_num = 3333;
+    try{
+        boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(raw_ip_address), port_num);
+        boost::asio::io_context ioc;
+        boost::asio::ip::tcp::socket sock(ioc, ep.protocol());
+        sock.connect(ep);
+        //下面这种方式是发送不完就阻塞，直至发完
+        std::string buf = "hello,world";
+        int send_length = sock.send(boost::asio::buffer(buf.c_str(), buf.length()));
+        if(send_length <= 0){
+            //发送失败
+            //<0 出现socket系统级错误
+            //=0 对方关闭
+            //>0 一定是buf.length
+        }
+    }
+    catch(std::system_error& e){
+        std::cout << "error" ;
+    }
+}
+
+int send_data_by_send(){
+    std::string raw_ip_address = "192.168.3.11";
+    unsigned short port_num = 3333;
+    try{
+        boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(raw_ip_address), port_num);
+        boost::asio::io_context ioc;
+        boost::asio::ip::tcp::socket sock(ioc, ep.protocol());
+        sock.connect(ep);
+        //下面这种方式是发送不完就阻塞，直至发完
+        std::string buf = "hello,world";
+        int send_length = boost::asio::write(sock, boost::asio::buffer(buf.c_str(), buf.length()));
+        if(send_length <= 0){
+            //发送失败
+            //<0 出现socket系统级错误
+            //=0 对方关闭
+            //>0 一定是buf.length
+        }
+    }
+    catch(std::system_error& e){
+        std::cout << "error" ;
+    }
+}
+
+std::string read_from_socket(boost::asio::ip::tcp::socket& sock){
+    const unsigned char MESSAGE_SIZE = 7;
+    char buf[MESSAGE_SIZE];
+    std::size_t total_bytes_read = 0;
+    while(total_bytes_read != MESSAGE_SIZE){
+        total_bytes_read += sock.read_some(boost::asio::buffer(buf+total_bytes_read, MESSAGE_SIZE-total_bytes_read));
+    }
+    return std::string(buf, total_bytes_read);
+}
+
+int read_data_by_read_some(){
+    std::string raw_ip_address = "127.0.0.1";
+    unsigned short port_num = 3333;
+    try{
+        boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(raw_ip_address), port_num);
+        boost::asio::io_context ioc;
+        boost::asio::ip::tcp::socket sock(ioc, ep.protocol());
+        sock.connect(ep);
+        //如果对方没有发送数据，则一直阻塞
+        read_from_socket(sock);
+    }
+    catch(std::system_error& e){
+
+    }
+}
+
+int read_data_by_receive(){
+    std::string raw_ip_address = "127.0.0.1";
+    unsigned short port_num = 3333;
+    try{
+        boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(raw_ip_address), port_num);
+        boost::asio::io_context ioc;
+        boost::asio::ip::tcp::socket sock(ioc, ep.protocol());
+        sock.connect(ep);
+        //如果对方没有发送数据，则一直阻塞
+        const unsigned char BUFF_SIZE = 7;
+        char buffer_receive[BUFF_SIZE];
+        //一定会读7个，不然一直阻塞
+        int receive_length = sock.receive(boost::asio::buffer(buffer_receive, BUFF_SIZE));
+        if(receive_length <= 0){
+
+        }
+    }
+    catch(std::system_error& e){
+
+    }
+}
+
+int read_data_by_receive(){
+    std::string raw_ip_address = "127.0.0.1";
+    unsigned short port_num = 3333;
+    try{
+        boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(raw_ip_address), port_num);
+        boost::asio::io_context ioc;
+        boost::asio::ip::tcp::socket sock(ioc, ep.protocol());
+        sock.connect(ep);
+        //如果对方没有发送数据，则一直阻塞
+        const unsigned char BUFF_SIZE = 7;
+        char buffer_receive[BUFF_SIZE];
+        //一定会读7个，不然一直阻塞
+        int receive_length = boost::asio::read(sock, boost::asio::buffer(buffer_receive, BUFF_SIZE));
+        if(receive_length <= 0){
+
+        }
+    }
+    catch(std::system_error& e){
+
+    }
+}
