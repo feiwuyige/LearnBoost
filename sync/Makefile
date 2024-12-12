@@ -13,7 +13,8 @@ SRC_CLIENT = client.cpp
 
 # 编译规则
 all: $(TARGET_SERVER) $(TARGET_CLIENT)
-
+# $@ 代表当前规则中的目标文件
+# $^ 当前规则中的所有依赖文件
 $(TARGET_SERVER): $(SRC_SERVER)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
