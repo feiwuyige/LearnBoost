@@ -83,7 +83,23 @@
    acceptor.accept(sock);
    ```
 
-   
+8. buffer：接受和发送数据时缓存数据的结构，`boost` 提供了：
+
+   *  `asio::mutable_buffer` :用于写服务
+   * `asio::const_buffer` :用于读服务
+
+   但是 `boost` 的 `api` 并没有直接使用这两个参数，而是使用了 `MutableBufferSequence` 和 `ConstBufferSequence` 的概念，可以理解为是对应类型的一个 `vector` 数组，其中每一个数组元素是一个地址，这个地址指向一个具体的 `mutable_buffer` 或者 `const_buffer` 结构，而每个结构的第一个元素是长度，后面是具体的内容。
+
+   对于使用而言，`boost` 提供了 `buffer` 函数：
+
+   * 参数为只读类型，返回一个 `asio::const_buffers_1` 类型对象
+   * 参数为可写类型，返回一个 `asio::mutable_buffers_1` 类型对象
+
+   `asio::const_buffers_1 ` 、`asio::mutable_buffers_1` 是**适配器**，提供了符合 `MutableBufferSequence` 和 `ConstBufferSequence` 概念的接口，所以它们可以作为 `boost` 的 `api`的参数使用。
+
+**重要概念**:
+
+* 适配器：适配器（adaptor）是标准库中的一个通用概念。容器、迭代器和函数都有适配器。本质上，一个适配器是一种机制，能使某种事物的行为看起来像另外一种事物一样。一个容器适配器接受一种已有的容器类型，使其行为看起来像一种不同的类型。
 
 
 
